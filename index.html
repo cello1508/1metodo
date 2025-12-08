@@ -647,6 +647,17 @@
                 // Start burst animation
                 setIsSubmitting(true);
 
+                // Send data to webhook
+                fetch("https://autowebhook.mgtinc.cloud/webhook/1metodo", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ email: email })
+                })
+                    .then(response => console.log("Webhook sent:", response))
+                    .catch(error => console.error("Webhook error:", error));
+
                 // Wait for animation then show success
                 setTimeout(() => {
                     setIsSubmitting(false);
