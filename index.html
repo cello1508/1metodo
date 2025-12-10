@@ -334,9 +334,9 @@
     <script type="module">
         import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
         import { createRoot } from "react-dom/client";
-        import { useEffect, useRef, useState, useMemo } from "react";
+        import { useEffect, useRef, useState, useMemo, useCallback } from "react";
         import createGlobe from "cobe";
-        import { useSpring } from "framer-motion";
+        import { useSpring, motion } from "framer-motion";
 
         console.log("Script module loaded");
 
@@ -605,12 +605,161 @@
             });
         };
 
+        // --- Matrix Text Component ---
+
+        const LANGUAGES = [
+            "De quem construiu para quem está construindo",
+            "From those who built to those who are building",
+            "De quienes construyeron para quienes están construyendo",
+            "De ceux qui ont construit pour ceux qui construisent",
+            "Von denen, die gebaut haben, für die, die bauen",
+            "Da chi ha costruito per chi sta costruendo",
+            "Van degenen die bouwden voor degenen die bouwen",
+            "建てた人から、建てている人へ"
+        ];
+
+        const MatrixText = ({
+            text = "HelloWorld!",
+            className,
+            initialDelay = 200,
+            letterAnimationDuration = 500,
+            letterInterval = 50, // Faster interval for smoother flow
+        }) => {
+            const [letters, setLetters] = useState(() =>
+                text.split("").map((char) => ({
+                    char,
+                    isMatrix: false,
+                    isSpace: char === " ",
+                }))
+            );
+            const [isAnimating, setIsAnimating] = useState(false);
+
+            const getRandomChar = useCallback(
+                () => (Math.random() > 0.5 ? "1" : "0"),
+                []
+            );
+
+            const animateLetter = useCallback(
+                (index) => {
+                    if (index >= text.length) return;
+
+                    requestAnimationFrame(() => {
+                        setLetters((prev) => {
+                            const newLetters = [...prev];
+                            // Check bounds
+                            if (index < newLetters.length && !newLetters[index].isSpace) {
+                                newLetters[index] = {
+                                    ...newLetters[index],
+                                    char: getRandomChar(),
+                                    isMatrix: true,
+                                };
+                            }
+                            return newLetters;
+                        });
+
+                        setTimeout(() => {
+                            setLetters((prev) => {
+                                const newLetters = [...prev];
+                                if (index < newLetters.length) {
+                                    newLetters[index] = {
+                                        ...newLetters[index],
+                                        char: text[index],
+                                        isMatrix: false,
+                                    };
+                                }
+                                return newLetters;
+                            });
+                        }, letterAnimationDuration);
+                    });
+                },
+                [getRandomChar, text, letterAnimationDuration]
+            );
+
+            const startAnimation = useCallback(() => {
+                if (isAnimating) return;
+
+                setIsAnimating(true);
+                let currentIndex = 0;
+
+                const animate = () => {
+                    if (currentIndex >= text.length) {
+                        setIsAnimating(false);
+                        return;
+                    }
+
+                    animateLetter(currentIndex);
+                    currentIndex++;
+                    setTimeout(animate, letterInterval);
+                };
+
+                animate();
+            }, [animateLetter, text, isAnimating, letterInterval]);
+
+            useEffect(() => {
+                const timer = setTimeout(startAnimation, initialDelay);
+                return () => clearTimeout(timer);
+            }, []);
+
+            const motionVariants = useMemo(
+                () => ({
+                    matrix: {
+                        color: "#ffffff",
+                        textShadow: "0 0 8px rgba(255, 255, 255, 0.8)",
+                    },
+                    normal: {
+                        color: "rgba(255, 255, 255, 0.7)", // Match the slogan color
+                        textShadow: "none"
+                    }
+                }),
+                []
+            );
+
+            return _jsx("div", {
+                className: className,
+                "aria-label": "Matrix text animation",
+                style: { display: "flex", justifyContent: "center" },
+                children: _jsx("div", {
+                    style: { display: "flex", alignItems: "center", justifyContent: "center", minHeight: "3em" }, // Reserve space
+                    children: _jsx("div", {
+                        style: { display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "center" },
+                        children: letters.map((letter, index) => (
+                            _jsx(motion.div, {
+                                className: "font-mono",
+                                initial: "initial",
+                                animate: letter.isMatrix ? "matrix" : "normal",
+                                variants: motionVariants,
+                                transition: {
+                                    duration: 0.1,
+                                    ease: "easeInOut",
+                                },
+                                style: {
+                                    display: "inline-block",
+                                    fontVariantNumeric: "tabular-nums",
+                                    width: "1ch", // Fixed width for monospaced feel and preventing layout shift
+                                    textAlign: "center"
+                                },
+                                children: letter.isSpace ? "\u00A0" : letter.char
+                            }, `${index}-${letter.char}`)
+                        ))
+                    })
+                })
+            });
+        };
+
         // --- App Component ---
 
         function App() {
             const [email, setEmail] = useState("");
             const [isSubmitting, setIsSubmitting] = useState(false);
             const [showSuccess, setShowSuccess] = useState(false);
+            const [languageIndex, setLanguageIndex] = useState(0);
+
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    setLanguageIndex((prev) => (prev + 1) % LANGUAGES.length);
+                }, 5000); // Rotate every 5 seconds
+                return () => clearInterval(interval);
+            }, []);
 
             // Dynamic Globe Props based on interaction
             const globeProps = useMemo(() => ({
@@ -683,12 +832,13 @@
                                 className: "overlay-content",
                                 children: [
                                     _jsx("h1", { children: "1Metodo" }),
-                                    _jsxs("p", {
+                                    _jsxs("div", {
                                         className: "slogan",
                                         children: [
-                                            "De quem construiu",
-                                            _jsx("br", {}),
-                                            "para quem está construindo"
+                                            _jsx(MatrixText, {
+                                                text: LANGUAGES[languageIndex],
+                                                key: languageIndex // Force re-mount to trigger animation on change
+                                            })
                                         ]
                                     }),
                                     _jsxs("form", {
