@@ -148,15 +148,9 @@
             line-height: 1.4;
         }
 
-        .email-form {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .email-input {
+        .email-input,
+        .select-input,
+        .text-area-input {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.15);
             padding: 16px 24px;
@@ -171,7 +165,29 @@
             font-family: inherit;
         }
 
-        .email-input:focus {
+        .select-input {
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .select-input option {
+            background-color: #000;
+            color: white;
+        }
+
+        .email-form {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            flex-direction: column;
+            /* Stack vertically for multiple inputs */
+        }
+
+        .email-input:focus,
+        .select-input:focus,
+        .text-area-input:focus {
             background: rgba(255, 255, 255, 0.1);
             border-color: rgba(255, 255, 255, 0.3);
             box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05);
@@ -219,6 +235,7 @@
                 flex-direction: column;
                 /* Stack input and button */
                 width: 100%;
+                align-items: stretch;
             }
 
             .email-input {
@@ -231,6 +248,11 @@
             .submit-btn {
                 width: 100%;
                 /* Full width button */
+            }
+
+            .select-input,
+            .text-area-input {
+                width: 100%;
             }
 
             .orbit-bg {
@@ -336,7 +358,7 @@
         import { createRoot } from "react-dom/client";
         import { useEffect, useRef, useState, useMemo, useCallback } from "react";
         import createGlobe from "cobe";
-        import { useSpring, motion } from "framer-motion";
+        import { useSpring, motion, AnimatePresence } from "framer-motion";
 
         console.log("Script module loaded");
 
@@ -750,6 +772,9 @@
 
         function App() {
             const [email, setEmail] = useState("");
+            const [builderStatus, setBuilderStatus] = useState("");
+            const [projectInfo, setProjectInfo] = useState("");
+            const [currentStep, setCurrentStep] = useState(0);
             const [isSubmitting, setIsSubmitting] = useState(false);
             const [showSuccess, setShowSuccess] = useState(false);
             const [languageIndex, setLanguageIndex] = useState(0);
@@ -789,9 +814,23 @@
                 width: "100%"
             }), [isSubmitting]);
 
+            const handleNextStep = (e) => {
+                e.preventDefault();
+                if (currentStep === 0 && email) {
+                    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) return; // Basic validation
+                    setCurrentStep(1);
+                } else if (currentStep === 1 && builderStatus) {
+                    setCurrentStep(2);
+                }
+            };
+
+            const handleBack = () => {
+                if (currentStep > 0) setCurrentStep(prev => prev - 1);
+            };
+
             const handleSubmit = (e) => {
                 e.preventDefault();
-                if (!email) return;
+                if (!email || !builderStatus || !projectInfo) return;
 
                 // Start burst animation
                 setIsSubmitting(true);
@@ -802,7 +841,11 @@
                     headers: {
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({ email: email })
+                    body: JSON.stringify({
+                        email: email,
+                        builderStatus: builderStatus,
+                        projectInfo: projectInfo
+                    })
                 })
                     .then(response => console.log("Webhook sent:", response))
                     .catch(error => console.error("Webhook error:", error));
@@ -841,22 +884,99 @@
                                             })
                                         ]
                                     }),
-                                    _jsxs("form", {
+                                    _jsxs("div", {
                                         className: "email-form",
-                                        onSubmit: handleSubmit,
                                         children: [
-                                            _jsx("input", {
-                                                type: "email",
-                                                placeholder: "Seu melhor e-mail",
-                                                className: "email-input",
-                                                required: true,
-                                                value: email,
-                                                onChange: (e) => setEmail(e.target.value)
-                                            }),
-                                            _jsx("button", {
-                                                type: "submit",
-                                                className: "submit-btn",
-                                                children: "Entrar"
+                                            _jsx(AnimatePresence, {
+                                                mode: "wait",
+                                                children: currentStep === 0 ? _jsxs(motion.form, {
+                                                    key: "step1",
+                                                    onSubmit: handleNextStep,
+                                                    initial: { opacity: 0, x: 20 },
+                                                    animate: { opacity: 1, x: 0 },
+                                                    exit: { opacity: 0, x: -20 },
+                                                    transition: { duration: 0.3 },
+                                                    style: { display: "flex", gap: "12px", flexDirection: "column", alignItems: "center", width: "100%" },
+                                                    children: [
+                                                        _jsx("input", {
+                                                            type: "email",
+                                                            placeholder: "Seu melhor e-mail",
+                                                            className: "email-input",
+                                                            required: true,
+                                                            value: email,
+                                                            onChange: (e) => setEmail(e.target.value),
+                                                            autoFocus: true
+                                                        }),
+                                                        _jsx("button", {
+                                                            type: "submit",
+                                                            className: "submit-btn",
+                                                            children: "Próximo"
+                                                        })
+                                                    ]
+                                                }) : currentStep === 1 ? _jsxs(motion.div, {
+                                                    key: "step2",
+                                                    initial: { opacity: 0, x: 20 },
+                                                    animate: { opacity: 1, x: 0 },
+                                                    exit: { opacity: 0, x: -20 },
+                                                    transition: { duration: 0.3 },
+                                                    style: { display: "flex", gap: "12px", flexDirection: "column", alignItems: "center", width: "100%" },
+                                                    children: [
+                                                        _jsx("label", { style: { color: "rgba(255,255,255,0.8)", marginBottom: "8px" }, children: "Você já construiu ou está construindo?" }),
+                                                        _jsxs("div", {
+                                                            style: { display: "flex", gap: "12px", width: "100%", justifyContent: "center" },
+                                                            children: [
+                                                                _jsx("button", {
+                                                                    type: "button",
+                                                                    className: "submit-btn",
+                                                                    style: { background: builderStatus === "built" ? "white" : "rgba(255,255,255,0.1)", color: builderStatus === "built" ? "black" : "white", flex: 1, padding: "12px" },
+                                                                    onClick: () => { setBuilderStatus("built"); setTimeout(() => setCurrentStep(2), 200); },
+                                                                    children: "Já construí"
+                                                                }),
+                                                                _jsx("button", {
+                                                                    type: "button",
+                                                                    className: "submit-btn",
+                                                                    style: { background: builderStatus === "building" ? "white" : "rgba(255,255,255,0.1)", color: builderStatus === "building" ? "black" : "white", flex: 1, padding: "12px" },
+                                                                    onClick: () => { setBuilderStatus("building"); setTimeout(() => setCurrentStep(2), 200); },
+                                                                    children: "Estou construindo"
+                                                                })
+                                                            ]
+                                                        }),
+                                                        _jsx("div", {
+                                                            onClick: handleBack,
+                                                            style: { color: "rgba(255,255,255,0.4)", fontSize: "0.8rem", marginTop: "12px", cursor: "pointer", textDecoration: "underline" },
+                                                            children: "Voltar"
+                                                        })
+                                                    ]
+                                                }) : _jsxs(motion.form, {
+                                                    key: "step3",
+                                                    onSubmit: handleSubmit,
+                                                    initial: { opacity: 0, x: 20 },
+                                                    animate: { opacity: 1, x: 0 },
+                                                    exit: { opacity: 0, x: -20 },
+                                                    transition: { duration: 0.3 },
+                                                    style: { display: "flex", gap: "12px", flexDirection: "column", alignItems: "center", width: "100%" },
+                                                    children: [
+                                                        _jsx("input", {
+                                                            type: "text",
+                                                            placeholder: "Onde podemos saber mais sobre o que construiu?",
+                                                            className: "text-area-input",
+                                                            required: true,
+                                                            value: projectInfo,
+                                                            onChange: (e) => setProjectInfo(e.target.value),
+                                                            autoFocus: true
+                                                        }),
+                                                        _jsx("button", {
+                                                            type: "submit",
+                                                            className: "submit-btn",
+                                                            children: "Entrar"
+                                                        }),
+                                                        _jsx("div", {
+                                                            onClick: handleBack,
+                                                            style: { color: "rgba(255,255,255,0.4)", fontSize: "0.8rem", marginTop: "12px", cursor: "pointer", textDecoration: "underline" },
+                                                            children: "Voltar"
+                                                        })
+                                                    ]
+                                                })
                                             })
                                         ]
                                     })
