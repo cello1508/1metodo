@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1Metodo</title>
+    <link rel="icon" href="./IMG_2827.jpg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+        }
+
+        #root {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            /* Globe on top */
+        }
+
+        /* Background Elements */
+        .orbit-bg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 140vh;
+            /* Adjust size as needed */
+            height: 140vh;
+            background-image: url('https://framerusercontent.com/images/ZpmqA0g8sZd5ObaVwBsgzc6dg.svg');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.6;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        #stars-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Light Circles (Orbits) */
+        .light-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-image: url('https://framerusercontent.com/images/RN6g00pcccwOXOMeCY8Ilfot6dQ.svg');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            pointer-events: none;
+            z-index: 1;
+            /* Behind globe (z-index 2) but above bg */
+            opacity: 0.8;
+        }
+
+        .light-circle-1 {
+            width: 65vh;
+            height: 65vh;
+            animation: rotate-cw 60s linear infinite;
+        }
+
+        .light-circle-2 {
+            width: 75vh;
+            height: 75vh;
+            animation: rotate-ccw 80s linear infinite;
+            opacity: 0.6;
+        }
+
+        @keyframes rotate-cw {
+            from {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+
+            to {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
+        }
+
+        @keyframes rotate-ccw {
+            from {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+
+            to {
+                transform: translate(-50%, -50%) rotate(-360deg);
+            }
+        }
+
+        /* Overlay Styles */
+        .overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            pointer-events: none;
+            box-sizing: border-box;
+            /* Ensure padding doesn't overflow width */
+        }
+
+        .overlay-content {
+            pointer-events: auto;
+        }
+
+        h1 {
+            font-size: 5rem;
+            font-weight: 700;
+            color: white;
+            margin: 0;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.03em;
+            line-height: 1;
+        }
+
+        .slogan {
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin: 0;
+            margin-bottom: 3rem;
+            font-weight: 400;
+            line-height: 1.4;
+        }
+
+        .email-form {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .email-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 16px 24px;
+            border-radius: 99px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            width: 320px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .email-input:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05);
+        }
+
+        .email-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .submit-btn {
+            background: white;
+            color: black;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 99px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            font-family: inherit;
+        }
+
+        .submit-btn:hover {
+            transform: scale(1.05);
+            background-color: #f0f0f0;
+        }
+
+        .submit-btn:active {
+            transform: scale(0.95);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 3rem;
+                /* Smaller font for mobile */
+            }
+
+            .slogan {
+                font-size: 1.2rem;
+                margin-bottom: 2rem;
+                /* Reduce margin */
+            }
+
+            .email-form {
+                flex-direction: column;
+                /* Stack input and button */
+                width: 100%;
+            }
+
+            .email-input {
+                width: 100%;
+                /* Full width */
+                box-sizing: border-box;
+                /* Include padding in width */
+            }
+
+            .submit-btn {
+                width: 100%;
+                /* Full width button */
+            }
+
+            .orbit-bg {
+                width: 100vw;
+                height: 100vw;
+            }
+
+            .light-circle-1 {
+                width: 80vw;
+                height: 80vw;
+            }
+
+            .light-circle-2 {
+                width: 90vw;
+                height: 90vw;
+            }
+
+            .overlay {
+                padding: 24px;
+                /* Ensure padding on mobile */
+            }
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "react": "https://esm.sh/react@18.2.0",
+                "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+                "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime",
+                "framer-motion": "https://esm.sh/framer-motion@10.16.4?external=react,react-dom",
+                "cobe": "https://esm.sh/cobe@0.6.3"
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <div class="orbit-bg"></div>
+    <div class="light-circle light-circle-1"></div>
+    <div class="light-circle light-circle-2"></div>
+    <canvas id="stars-canvas"></canvas>
+    <div id="root"></div>
+
+    <script>
+        // --- Stars Animation ---
+        (function () {
+            const canvas = document.getElementById('stars-canvas');
+            const ctx = canvas.getContext('2d');
+            let width, height;
+            let stars = [];
+
+            function resize() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width;
+                canvas.height = height;
+                initStars();
+            }
+
+            function initStars() {
+                stars = [];
+                const numStars = Math.floor((width * height) / 4000); // Adjust density
+                for (let i = 0; i < numStars; i++) {
+                    stars.push({
+                        x: Math.random() * width,
+                        y: Math.random() * height,
+                        radius: Math.random() * 1.5,
+                        alpha: Math.random(),
+                        speed: Math.random() * 0.2 + 0.1
+                    });
+                }
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+                ctx.fillStyle = 'white';
+
+                stars.forEach(star => {
+                    ctx.globalAlpha = star.alpha;
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Move star
+                    star.y -= star.speed;
+                    if (star.y < 0) {
+                        star.y = height;
+                        star.x = Math.random() * width;
+                    }
+                });
+
+                requestAnimationFrame(animate);
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+            animate();
+        })();
+    </script>
+
+    <script type="module">
+        import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+        import { createRoot } from "react-dom/client";
+        import { useEffect, useRef, useState, useMemo } from "react";
+        import createGlobe from "cobe";
+        import { useSpring } from "framer-motion";
+
+        console.log("Script module loaded");
+
+        // Global error handler
+        window.onerror = function (message, source, lineno, colno, error) {
+            console.error("Global error:", message, "at", source, ":", lineno);
+            const root = document.getElementById('root');
+            if (root) root.innerHTML += `<div style="color: red; z-index: 1000; position: absolute; top: 0; left: 0; background: rgba(0,0,0,0.8); padding: 20px;">Error: ${message}</div>`;
+        };
+
+        // --- Mocks for Framer dependencies ---
+        const ControlType = {
+            Color: "Color",
+            Boolean: "Boolean",
+            Object: "Object",
+            Number: "Number",
+            Enum: "Enum",
+            Array: "Array"
+        };
+
+        const RenderTarget = {
+            current: () => ({}),
+            canvas: "canvas"
+        };
+
+        const addPropertyControls = () => { };
+
+        // Improved Color mock
+        function Color(color) {
+            try {
+                if (typeof color === 'string') {
+                    if (color.startsWith('#')) {
+                        const hex = color.substring(1);
+                        const r = parseInt(hex.substring(0, 2), 16);
+                        const g = parseInt(hex.substring(2, 4), 16);
+                        const b = parseInt(hex.substring(4, 6), 16);
+                        return { r, g, b };
+                    } else if (color.startsWith('rgb')) {
+                        const match = color.match(/(\d+),\s*(\d+),\s*(\d+)/);
+                        if (match) {
+                            return {
+                                r: parseInt(match[1]),
+                                g: parseInt(match[2]),
+                                b: parseInt(match[3])
+                            };
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Error parsing color:", color, e);
+            }
+            // Fallback
+            return { r: 255, g: 255, b: 255 };
+        }
+
+        // --- Globe Component Code (Adapted) ---
+
+        // --- Globe Component Code (Adapted) ---
+
+        function Globe(props) {
+            const {
+                background,
+                baseColor,
+                glowColor,
+                isDraggable,
+                dragOptions,
+                speed,
+                theta,
+                phi,
+                dark,
+                diffuse,
+                maxSamples,
+                mapBrightness,
+                markerSize,
+                markerArray,
+                markerColor,
+                scale,
+                alignment,
+                maxWidth,
+                offset
+            } = props;
+
+            const { offsetX, offsetY } = offset;
+            const { stiffness, damping, mass } = dragOptions;
+
+            const canvasRef = useRef();
+            const pointerInteracting = useRef(null);
+            const pointerInteractionMovement = useRef(0);
+            const isCanvas = RenderTarget.current() === RenderTarget.canvas;
+
+            // Refs for dynamic values to avoid re-init
+            const phiRef = useRef(phi);
+            const speedRef = useRef(speed);
+            const scaleRef = useRef(scale);
+            const glowColorRef = useRef(glowColor);
+            const baseColorRef = useRef(baseColor);
+            const widthRef = useRef(0);
+
+            // Update refs when props change
+            useEffect(() => {
+                speedRef.current = speed;
+                scaleRef.current = scale;
+                glowColorRef.current = glowColor;
+                baseColorRef.current = baseColor;
+            }, [speed, scale, glowColor, baseColor]);
+
+            const r = useSpring(0, {
+                stiffness: stiffness,
+                damping: damping,
+                mass: mass,
+                restDelta: 1e-4,
+                restSpeed: 1e-4
+            });
+
+            const fadeMask = "radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 70%)";
+
+            // Helper function from original code
+            const convertRGB = color => {
+                const c = Color(color);
+                return [c.r / 255, c.g / 255, c.b / 255];
+            };
+
+            useEffect(() => {
+                let phiValue = phi;
+                let width = 0;
+
+                if (!canvasRef.current) return;
+
+                const onResize = () => {
+                    if (canvasRef.current) {
+                        width = canvasRef.current.offsetWidth;
+                        widthRef.current = width;
+                    }
+                };
+                window.addEventListener("resize", onResize);
+                onResize();
+
+                let globe;
+                try {
+                    globe = createGlobe(canvasRef.current, {
+                        devicePixelRatio: 2,
+                        width: width * 2,
+                        height: width * 2,
+                        phi: phi,
+                        theta: theta,
+                        dark: dark,
+                        diffuse: diffuse,
+                        mapSamples: maxSamples,
+                        mapBrightness: mapBrightness,
+                        baseColor: convertRGB(baseColorRef.current),
+                        glowColor: convertRGB(glowColorRef.current),
+                        markerColor: convertRGB(markerColor),
+                        markers: markerArray.map(marker => ({
+                            location: [marker.latitude, marker.longitude],
+                            size: markerSize
+                        })),
+                        scale: scale,
+                        offset: [offsetX, offsetY],
+                        onRender: state => {
+                            // Dynamic updates inside render loop
+                            state.width = widthRef.current * 2;
+                            state.height = widthRef.current * 2;
+
+                            // Smoothly interpolate values if needed, or just set them
+                            // For color, cobe might not support dynamic color updates easily without re-init in some versions,
+                            // but let's try updating the state properties if they are exposed.
+                            // Note: cobe 0.6.3 supports updating some props on the fly via state.
+
+                            // Update dynamic props
+                            const currentGlow = convertRGB(glowColorRef.current);
+                            state.glowColor = currentGlow;
+                            state.scale = scaleRef.current;
+
+                            if (!isCanvas) {
+                                state.phi = phiValue + r.get();
+                                phiValue += speedRef.current / 200;
+                            }
+                        }
+                    });
+                } catch (e) {
+                    console.error("Error initializing globe:", e);
+                }
+
+                return () => {
+                    if (globe) globe.destroy();
+                    window.removeEventListener("resize", onResize);
+                };
+            }, [theta, dark, diffuse, maxSamples, mapBrightness, markerSize, markerArray, markerColor, offsetX, offsetY, isCanvas]);
+            // Removed speed, scale, glowColor, baseColor from dependency array to prevent re-init
+
+            const flexStyles = {
+                width: "100%",
+                height: "100%",
+                display: "flex",
+                placeItems: "center",
+                placeContent: "center",
+                overflow: "visible"
+            };
+
+            return _jsx("div", {
+                style: {
+                    ...flexStyles,
+                    placeItems: alignment,
+                    background: background
+                },
+                children: _jsx("div", {
+                    style: {
+                        width: "100%",
+                        aspectRatio: "1/1",
+                        maxWidth: maxWidth,
+                        WebkitMaskImage: fadeMask,
+                        MozMaskImage: fadeMask,
+                        maskImage: fadeMask,
+                        transition: "all 1s ease" // Smooth transition for container changes if any
+                    },
+                    children: _jsx("canvas", {
+                        ref: canvasRef,
+                        style: {
+                            width: "100%",
+                            height: "100%",
+                            contain: "layout paint size",
+                            cursor: "auto",
+                            userSelect: "none"
+                        },
+                        onPointerDown: e => {
+                            if (isDraggable) {
+                                pointerInteracting.current = e.clientX - pointerInteractionMovement.current;
+                                canvasRef.current.style.cursor = "grabbing";
+                            }
+                        },
+                        onPointerUp: () => {
+                            if (isDraggable) {
+                                pointerInteracting.current = null;
+                                canvasRef.current.style.cursor = "grab";
+                            }
+                        },
+                        onPointerOver: () => {
+                            if (isDraggable) {
+                                canvasRef.current.style.cursor = "grab";
+                            }
+                        },
+                        onPointerOut: () => {
+                            if (isDraggable) {
+                                pointerInteracting.current = null;
+                                canvasRef.current.style.cursor = "auto";
+                            }
+                        },
+                        onMouseMove: e => {
+                            if (isDraggable) {
+                                if (pointerInteracting.current !== null) {
+                                    const delta = e.clientX - pointerInteracting.current;
+                                    pointerInteractionMovement.current = delta;
+                                    r.set(delta / 100);
+                                }
+                            }
+                        },
+                        onTouchMove: e => {
+                            if (pointerInteracting.current !== null && e.touches[0]) {
+                                const delta = e.touches[0].clientX - pointerInteracting.current;
+                                pointerInteractionMovement.current = delta;
+                                r.set(delta / 100);
+                            }
+                        }
+                    })
+                })
+            });
+        };
+
+        // --- App Component ---
+
+        function App() {
+            const [email, setEmail] = useState("");
+            const [isSubmitting, setIsSubmitting] = useState(false);
+            const [showSuccess, setShowSuccess] = useState(false);
+
+            // Dynamic Globe Props based on interaction
+            const globeProps = useMemo(() => ({
+                alignment: "center",
+                background: "rgba(0, 0, 0, 0)",
+                baseColor: "rgba(51, 51, 51, 0)",
+                dark: 0.9,
+                diffuse: 2.0,
+                dragOptions: { damping: 40, mass: 1, stiffness: 200 },
+                // Burst color on submit
+                glowColor: isSubmitting ? "rgb(50, 200, 255)" : "rgb(255, 255, 255)",
+                height: "100%",
+                isDraggable: true,
+                mapBrightness: 4.0,
+                markerArray: [],
+                markerColor: "rgb(255, 255, 255)",
+                markerSize: 0.1,
+                maxSamples: 37680,
+                maxWidth: 600,
+                offset: { offsetX: 0, offsetY: 0 },
+                phi: 0,
+                // Zoom in slightly on submit
+                scale: isSubmitting ? 1.1 : 1,
+                // Spin very fast on submit
+                speed: isSubmitting ? 3.0 : 0.3,
+                theta: 0.67,
+                width: "100%"
+            }), [isSubmitting]);
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!email) return;
+
+                // Start burst animation
+                setIsSubmitting(true);
+
+                // Send data to webhook
+                fetch("https://autowebhook.mgtinc.cloud/webhook/1metodo", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ email: email })
+                })
+                    .then(response => console.log("Webhook sent:", response))
+                    .catch(error => console.error("Webhook error:", error));
+
+                // Wait for animation then show success
+                setTimeout(() => {
+                    setIsSubmitting(false);
+                    setShowSuccess(true);
+                }, 1500);
+            };
+
+            return _jsxs("div", {
+                style: { width: "100%", height: "100%", position: "relative" },
+                children: [
+                    _jsx(Globe, { ...globeProps }),
+
+                    // Main Content Overlay
+                    !showSuccess && _jsxs("div", {
+                        className: "overlay",
+                        style: {
+                            opacity: isSubmitting ? 0 : 1,
+                            transition: "opacity 0.5s ease",
+                            pointerEvents: isSubmitting ? "none" : "auto"
+                        },
+                        children: [
+                            _jsxs("div", {
+                                className: "overlay-content",
+                                children: [
+                                ]
+                            })
+                        ]
+                    }),
+
+                    // Success Modal Overlay
+                    showSuccess && _jsx("div", {
+                        className: "overlay",
+                        style: {
+                            animation: "fadeIn 0.5s ease forwards"
+                        },
+                        children: _jsxs("div", {
+                            className: "overlay-content",
+                            style: {
+                                background: "rgba(255, 255, 255, 0.05)",
+                                backdropFilter: "blur(20px)",
+                                WebkitBackdropFilter: "blur(20px)",
+                                padding: "40px",
+                                borderRadius: "24px",
+                                border: "1px solid rgba(255, 255, 255, 0.1)",
+                                maxWidth: "400px",
+                                margin: "0 auto",
+                                boxShadow: "0 20px 40px rgba(0,0,0,0.4)"
+                            },
+                            children: [
+                                _jsx("div", {
+                                    style: {
+                                        fontSize: "3rem",
+                                        marginBottom: "16px"
+                                    },
+                                    children: "✨"
+                                }),
+                                _jsx("h2", {
+                                    style: {
+                                        color: "white",
+                                        fontSize: "2rem",
+                                        margin: "0 0 12px 0",
+                                        fontWeight: "700"
+                                    },
+                                    children: "Bem-vindo!"
+                                }),
+                                _jsx("p", {
+                                    style: {
+                                        color: "rgba(255, 255, 255, 0.8)",
+                                        fontSize: "1.1rem",
+                                        lineHeight: "1.5",
+                                        margin: "0 0 24px 0"
+                                    },
+                                    children: "Você está na lista de espera. Em breve entraremos em contato."
+                                }),
+                                _jsx("button", {
+                                    onClick: () => {
+                                        window.open("https://www.youtube.com/@1metodo", "_blank");
+                                    },
+                                    className: "submit-btn",
+                                    style: { width: "100%" },
+                                    children: "Inscrever-se no Canal"
+                                })
+                            ]
+                        })
+                    }),
+
+                    // Add keyframes for fade in
+                    _jsx("style", {
+                        children: `
+                            @keyframes fadeIn {
+                                from { opacity: 0; transform: translate(-50%, -40%); }
+                                to { opacity: 1; transform: translate(-50%, -50%); }
+                            }
+                        `
+                    })
+                ]
+            });
+        }
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(_jsx(App, {}));
+
+    </script>
+</body>
+
+</html>
